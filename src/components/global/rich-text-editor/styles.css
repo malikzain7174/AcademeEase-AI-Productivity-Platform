@@ -1,0 +1,103 @@
+/* Styles for the rich text editor container */
+.richtext-rounded-\[0\.5rem\] {
+  @apply rounded-lg; /* Using 0.5rem (8px) rounding */
+}
+
+.richtext-bg-background {
+  @apply bg-background; /* Apply your preferred background color */
+}
+
+.richtext-shadow {
+  @apply shadow-lg; /* Adds a large shadow around the container */
+}
+
+.richtext-overflow-hidden {
+  @apply overflow-hidden; /* Ensures content is clipped to bounds */
+}
+
+.richtext-outline {
+  @apply outline-none focus:outline-blue-500; /* Default and focus outline styles */
+}
+
+.richtext-outline-1 {
+  @apply outline-1; /* Sets the outline thickness */
+}
+
+/* Flex layout and size styles */
+.richtext-flex {
+  @apply flex;
+}
+
+.richtext-flex-col {
+  @apply flex-col;
+}
+
+.richtext-w-full {
+  @apply w-full;
+}
+
+.richtext-max-h-full {
+  @apply max-h-full;
+}
+
+/* Editor content specific styles */
+.richtext-relative {
+  @apply relative; /* Sets position relative for inner components */
+}
+
+/* Character count styling */
+.richtext-character-count {
+  @apply text-foreground-400 text-sm; /* Use subtle color and smaller font */
+}
+
+/* Bubble menu styles */
+.richtext-bubble-menu {
+  @apply absolute bg-background rounded-md shadow-md p-2;
+  /* Adjust padding, background, and shadow for a custom popup style */
+}
+
+/* Dark mode styles */
+.dark .richtext-bubble-menu {
+  @apply bg-background border border-border;
+}
+
+.dark .richtext-character-count {
+  @apply text-muted-foreground;
+}
+
+/* Prose styles for dark mode */
+.dark .prose {
+  @apply text-foreground;
+}
+
+.dark .prose strong {
+  @apply text-foreground;
+}
+
+.dark .prose a {
+  @apply text-primary;
+}
+
+.dark .prose blockquote {
+  @apply border-l-foreground/20 text-foreground/80;
+}
+
+.dark .prose hr {
+  @apply border-foreground/20;
+}
+
+.dark .prose pre {
+  @apply bg-muted text-foreground;
+}
+
+.dark .prose code {
+  @apply bg-muted text-foreground;
+}
+
+.dark .prose th {
+  @apply border-foreground/20;
+}
+
+.dark .prose td {
+  @apply border-foreground/20;
+}

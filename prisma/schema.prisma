@@ -1,0 +1,361 @@
+datasource db {
+    provider = "postgresql"
+    url      = env("POSTGRES_URL")
+}
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+model User {
+    id                 String            @id @default(cuid())
+    name               String?
+    email              String            @unique
+    image              String?
+    age                Int?
+    credits            Int               @default(0)
+    emailVerified      DateTime?
+    password           String? // Hashed password for email/password auth
+    verificationCode   String? // For email verification
+    verificationExpiry DateTime? // When the verification code expires
+    isVerified         Boolean           @default(false) // Track if user is verified
+    gradeYear          GradeYear?
+    fieldOfStudy       String?
+    learningStyle      LearningStyle?
+    studyEnvironment   StudyEnvironment?
+    ageRange           AgeRange?
+    // academicGoals       AcademicGoal[]       @relation
+    // interests           Interest[]           @relation
+    // background          BackgroundKnowledge? @relation(fields: [backgroundKnowledgeId], references: [id])
+    // challenges          Challenge[]          @relation
+    // specialRequirements SpecialRequirement[] @relation
+    // persona             Persona[]            @relation
+    accounts           Account[]
+    sessions           Session[]
+    workspace          Workspace[]
+    lastActive         DateTime?
+    loginCount         Int               @default(0)
+    preferences        Json? // Store user dashboard preferences
+    activities         UserActivity[]
+    dashboardWidgets   DashboardWidget[]
+    pomodoroSessions   PomodoroSession[] // Relation to Pomodoro sessions
+
+    createdAt      DateTime      @default(now())
+    updatedAt      DateTime      @updatedAt
+    subscription   Subscription? @relation(fields: [subscriptionId], references: [id])
+    subscriptionId String?
+
+    @@index([email])
+}
+
+model Subscription {
+    id           String @id @default(cuid())
+    name         String
+    dailyCredits Int
+    users        User[]
+}
+
+// model AcademicGoal {
+//     id    Int    @id @default(autoincrement())
+//     name  String @unique
+//     users User[] @relation()
+// }
+
+// model Interest {
+//     id    Int    @id @default(autoincrement())
+//     name  String @unique
+//     users User[] @relation()
+// }
+
+// model BackgroundKnowledge {
+//     id    Int    @id @default(autoincrement())
+//     level String @unique
+//     users User[] @relation()
+// }
+
+// model Challenge {
+//     id    Int    @id @default(autoincrement())
+//     name  String @unique
+//     users User[] @relation()
+// }
+
+// model SpecialRequirement {
+//     id    Int    @id @default(autoincrement())
+//     name  String @unique
+//     users User[] @relation()
+// }
+
+// model Persona {
+//     id    Int    @id @default(autoincrement())
+//     name  String @unique
+//     users User[] @relation()
+// }
+
+model Account {
+    userId            String
+    type              String
+    provider          String
+    providerAccountId String
+    refresh_token     String?
+    access_token      String?
+    expires_at        Int?
+    token_type        String?
+    scope             String?
+    id_token          String?
+    session_state     String?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@id([provider, providerAccountId])
+    @@index([userId])
+}
+
+model Session {
+    sessionToken String   @unique
+    userId       String
+    expires      DateTime
+    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([userId])
+}
+
+model VerificationToken {
+    identifier String
+    token      String
+    expires    DateTime
+
+    @@id([identifier, token])
+}
+
+enum TagType {
+    SYSTEM
+    USER
+}
+
+model Tag {
+    id     String  @id @default(cuid())
+    name   String
+    type   TagType
+    taskId String
+    Task   Task    @relation(fields: [taskId], references: [id])
+}
+
+model KanbanBoard {
+    id          String         @id @default(cuid())
+    name        String
+    columns     KanbanColumn[]
+    workspace   Workspace      @relation(fields: [workspaceId], references: [id])
+    workspaceId String         @unique
+    createdAt   DateTime       @default(now())
+    updatedAt   DateTime       @updatedAt
+
+    @@index([workspaceId])
+}
+
+model KanbanColumn {
+    id            String      @id @default(cuid())
+    name          String
+    order         Int
+    color         String      @default("")
+    tasks         Task[]
+    kanbanBoard   KanbanBoard @relation(fields: [kanbanBoardId], references: [id])
+    kanbanBoardId String
+    createdAt     DateTime    @default(now())
+    updatedAt     DateTime    @updatedAt
+
+    @@index([kanbanBoardId])
+}
+
+model Task {
+    id               String            @id @default(cuid())
+    title            String
+    description      String?
+    priority         Priority
+    status           TaskStatus        @default(NOT_STARTED)
+    deadline         DateTime
+    workspace        Workspace?        @relation(fields: [workspaceId], references: [id])
+    workspaceId      String?
+    userId           String? // Make userId optional for migration
+    subtasks         Subtask[]
+    createdAt        DateTime          @default(now())
+    updatedAt        DateTime          @updatedAt
+    completedAt      DateTime? // Track when tasks are completed
+    startedAt        DateTime? // Track when tasks are started
+    estimatedHours   Float? // Estimated hours to complete
+    actualHours      Float? // Actual hours spent
+    KanbanColumn     KanbanColumn?     @relation(fields: [kanbanColumnId], references: [id], onDelete: Cascade)
+    kanbanColumnId   String?
+    tags             Tag[]
+    activities       Activity[]
+    notes            Note[]
+    pomodoroSessions PomodoroSession[] // Relation to Pomodoro sessions
+
+    @@index([workspaceId])
+    @@index([deadline]) // Index for faster deadline-based queries
+    @@index([userId]) // Index for faster user-based queries
+}
+
+model Activity {
+    id        String   @id @default(cuid())
+    title     String
+    createdAt DateTime @default(now())
+    task      Task?    @relation(fields: [taskId], references: [id])
+    taskId    String?
+}
+
+model Subtask {
+    id           String   @id @default(cuid())
+    title        String
+    description  String
+    completed    Boolean
+    Task         Task?    @relation(fields: [parentTaskId], references: [id])
+    parentTaskId String?
+    createdAt    DateTime @default(now())
+    updatedAt    DateTime @updatedAt
+}
+
+model Note {
+    id          String     @id @default(cuid())
+    title       String
+    content     String
+    task        Task?      @relation(fields: [taskId], references: [id])
+    taskId      String?
+    workspace   Workspace? @relation(fields: [workspaceId], references: [id])
+    workspaceId String?
+    createdAt   DateTime   @default(now())
+    updatedAt   DateTime   @updatedAt
+
+    @@index([taskId])
+    @@index([workspaceId])
+}
+
+model Workspace {
+    id               String            @id @default(cuid())
+    name             String
+    description      String?
+    color            String?
+    user             User              @relation(fields: [userId], references: [id])
+    userId           String
+    KanbanBoard      KanbanBoard?
+    notes            Note[]
+    createdAt        DateTime          @default(now())
+    updatedAt        DateTime          @updatedAt
+    Task             Task[]
+    activities       UserActivity[]
+    pomodoroSessions PomodoroSession[] // Relation to Pomodoro sessions
+
+    @@index([userId])
+}
+
+enum GradeYear {
+    FRESHMAN
+    SOPHOMORE
+    JUNIOR
+    SENIOR
+    GRADUATE
+}
+
+enum LearningStyle {
+    VISUAL
+    AUDITORY
+    KINESTHETIC
+}
+
+enum StudyEnvironment {
+    QUIET_ROOM
+    LIBRARY
+    OUTDOORS
+}
+
+enum AgeRange {
+    UNDER_18
+    AGE_18_21
+    AGE_22_25
+    AGE_26_30
+    OVER_30
+}
+
+enum Priority {
+    HIGHEST
+    HIGH
+    MEDIUM
+    LOW
+    LOWEST
+}
+
+enum TaskStatus {
+    NOT_STARTED
+    IN_PROGRESS
+    COMPLETED
+}
+
+model UserActivity {
+    id          String     @id @default(cuid())
+    userId      String
+    user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+    type        String // e.g., "TASK_CREATED", "TASK_COMPLETED", "WORKSPACE_CREATED"
+    description String? // Description of the activity
+    entityId    String? // ID of the related entity (task, workspace, etc.)
+    createdAt   DateTime   @default(now())
+    workspaceId String?
+    workspace   Workspace? @relation(fields: [workspaceId], references: [id])
+
+    @@index([userId])
+    @@index([createdAt])
+    @@index([workspaceId])
+}
+
+model DashboardWidget {
+    id        String   @id @default(cuid())
+    userId    String
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    type      String // e.g., "upcoming_tasks", "completed_tasks", "productivity_chart"
+    config    Json? // Widget-specific configuration
+    position  Int // Position on dashboard
+    size      String // e.g., "1x1", "2x1" for grid layout
+    enabled   Boolean  @default(true)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([userId])
+}
+
+enum PomodoroSessionType {
+    FOCUS
+    SHORT_BREAK
+    LONG_BREAK
+}
+
+// Pomodoro Session model to store completed Pomodoro sessions
+model PomodoroSession {
+    id          String              @id @default(cuid())
+    goal        String // The goal or task name for this session
+    duration    Int // Duration in seconds
+    completedAt DateTime // When the session was completed
+    sessionType PomodoroSessionType @default(FOCUS) // Type of session (focus or break)
+    userId      String // Foreign key to User
+    user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    // Optional workspace relation if the session is associated with a workspace
+    workspaceId String?
+    workspace   Workspace? @relation(fields: [workspaceId], references: [id])
+
+    // Optional task relation if the session is associated with a specific task
+    taskId String?
+    task   Task?   @relation(fields: [taskId], references: [id])
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([userId])
+    @@index([completedAt]) // For efficient date-based queries
+    @@index([workspaceId])
+    @@index([taskId])
+    @@index([sessionType]) // For efficient filtering by session type
+}

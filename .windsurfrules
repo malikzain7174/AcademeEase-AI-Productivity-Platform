@@ -1,0 +1,23 @@
+- My build system is Next.js version 14.2.5
+- My current language is English
+
+# General Code Style & Formatting
+- Prefer named exports for components.
+
+# Project Structure & Architecture
+- Follow Next.js patterns and use the App Router.
+- Correctly determine when to use server vs. client components in Next.js.
+
+# Styling & UI
+- Use Tailwind CSS for styling.
+- Use Shadcn UI for components.
+
+# Data Fetching & Forms
+- Use React Hook Form for form handling.
+- Use Zod for validation.
+
+# State Management & Logic
+- Use zustand for state management.
+
+# Backend & Database
+Use Prisma for database access.
